@@ -209,6 +209,8 @@ class TestNewProviders:
         assert "claude-3-sonnet-20240229" in model_ids
         assert "claude-3-opus-20240229" in model_ids
         assert "claude-3-5-sonnet-20240620" in model_ids
+        assert "claude-3-5-haiku-20241022" in model_ids
+        assert "claude-3-7-sonnet-20250219" in model_ids
 
     def test_list_models_includes_groq(self, client):
         response = client.get("/v1/models")
@@ -218,6 +220,10 @@ class TestNewProviders:
         assert "llama3-70b-8192" in model_ids
         assert "mixtral-8x7b-32768" in model_ids
         assert "gemma2-9b-it" in model_ids
+        assert "llama-3.3-70b-versatile" in model_ids
+        assert "llama-3.2-90b-vision-preview" in model_ids
+        assert "qwen-2.5-32b" in model_ids
+        assert "deepseek-r1-distill-llama-70b" in model_ids
 
     def test_list_models_includes_gemini(self, client):
         response = client.get("/v1/models")
@@ -226,6 +232,9 @@ class TestNewProviders:
         assert "gemini-1.5-pro" in model_ids
         assert "gemini-1.5-flash" in model_ids
         assert "gemini-1.0-pro" in model_ids
+        assert "gemini-2.0-flash" in model_ids
+        assert "gemini-2.5-pro" in model_ids
+        assert "gemini-2.5-flash" in model_ids
 
     def test_anthropic_model_metadata(self, client):
         response = client.get("/v1/models")
