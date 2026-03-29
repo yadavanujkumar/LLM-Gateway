@@ -1,5 +1,6 @@
 from typing import AsyncGenerator, Dict, Any, List
 import asyncio
+import datetime
 
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
@@ -9,6 +10,9 @@ from app.services.llm import openai_service, llama_service, mistral_service
 from app.services.llm.openai_service import OPENAI_MODELS
 from app.services.llm.llama_service import LLAMA_MODELS
 from app.services.llm.mistral_service import MISTRAL_MODELS
+
+# Epoch timestamp for Jan 1, 2024 (used as a static "created" timestamp for model listings)
+_MODEL_CATALOG_TIMESTAMP = int(datetime.datetime(2024, 1, 1, tzinfo=datetime.timezone.utc).timestamp())
 
 
 AVAILABLE_MODELS = {
@@ -84,8 +88,7 @@ async def route_embeddings(request: EmbeddingRequest) -> Dict[str, Any]:
 
 def get_all_models() -> List[Dict[str, Any]]:
     """Return list of all available models with metadata."""
-    import time
-    base_time = 1704067200  # Jan 1, 2024
+    base_time = _MODEL_CATALOG_TIMESTAMP
 
     models = []
 

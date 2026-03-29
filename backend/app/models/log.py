@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, String, DateTime, Integer, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -21,6 +21,8 @@ class RequestLog(Base):
     total_tokens = Column(Integer, default=0, nullable=False)
     status = Column(String(20), default="success", nullable=False)
     latency_ms = Column(Integer, default=0, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    timestamp = Column(DateTime(timezone=True),
+                       default=lambda: datetime.now(timezone.utc),
+                       nullable=False, index=True)
 
     user = relationship("User", back_populates="logs")

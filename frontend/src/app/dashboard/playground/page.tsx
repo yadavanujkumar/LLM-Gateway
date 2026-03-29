@@ -51,9 +51,17 @@ export default function PlaygroundPage() {
 
       const assistantMessage = response.choices[0].message;
       setMessages([...newMessages, assistantMessage]);
+      // Calculate cost from model pricing if available
+      const modelInfo = models.find((m) => m.id === selectedModel);
+      const pricing = modelInfo?.pricing;
+      const promptTokens = response.usage.prompt_tokens;
+      const completionTokens = response.usage.completion_tokens;
+      const cost = pricing
+        ? (promptTokens / 1000) * pricing.input + (completionTokens / 1000) * pricing.output
+        : 0;
       setLastUsage({
         tokens: response.usage.total_tokens,
-        cost: 0, // would need to calculate from model pricing
+        cost,
         cached: response.cached,
       });
     } catch {
@@ -149,6 +157,11 @@ export default function PlaygroundPage() {
               <p className="text-gray-300">
                 {lastUsage.tokens.toLocaleString()} tokens
               </p>
+              {lastUsage.cost > 0 && (
+                <p className="text-gray-300">
+                  ${lastUsage.cost.toFixed(6)}
+                </p>
+              )}
               {lastUsage.cached && (
                 <p className="text-green-400">⚡ Cached response</p>
               )}

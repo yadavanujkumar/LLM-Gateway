@@ -13,7 +13,12 @@ export async function login(
 ): Promise<{ access_token: string }> {
   const res = await api.post("/auth/login", { email, password });
   const { access_token } = res.data;
-  Cookies.set("token", access_token, { expires: 1, sameSite: "Strict" });
+  const isSecure = typeof window !== "undefined" && window.location.protocol === "https:";
+  Cookies.set("token", access_token, {
+    expires: 1,
+    sameSite: "Strict",
+    secure: isSecure,
+  });
   return res.data;
 }
 
