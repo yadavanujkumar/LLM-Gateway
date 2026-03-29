@@ -196,3 +196,157 @@ class TestChat:
             },
         )
         assert response.status_code == 401
+
+
+class TestNewProviders:
+    """Tests verifying that models for new LLM providers are registered and listed."""
+
+    def test_list_models_includes_anthropic(self, client):
+        response = client.get("/v1/models")
+        assert response.status_code == 200
+        model_ids = [m["id"] for m in response.json()["data"]]
+        assert "claude-3-haiku-20240307" in model_ids
+        assert "claude-3-sonnet-20240229" in model_ids
+        assert "claude-3-opus-20240229" in model_ids
+        assert "claude-3-5-sonnet-20240620" in model_ids
+
+    def test_list_models_includes_groq(self, client):
+        response = client.get("/v1/models")
+        assert response.status_code == 200
+        model_ids = [m["id"] for m in response.json()["data"]]
+        assert "llama3-8b-8192" in model_ids
+        assert "llama3-70b-8192" in model_ids
+        assert "mixtral-8x7b-32768" in model_ids
+        assert "gemma2-9b-it" in model_ids
+
+    def test_list_models_includes_gemini(self, client):
+        response = client.get("/v1/models")
+        assert response.status_code == 200
+        model_ids = [m["id"] for m in response.json()["data"]]
+        assert "gemini-1.5-pro" in model_ids
+        assert "gemini-1.5-flash" in model_ids
+        assert "gemini-1.0-pro" in model_ids
+
+    def test_anthropic_model_metadata(self, client):
+        response = client.get("/v1/models")
+        assert response.status_code == 200
+        models_by_id = {m["id"]: m for m in response.json()["data"]}
+        haiku = models_by_id["claude-3-haiku-20240307"]
+        assert haiku["owned_by"] == "anthropic"
+        assert haiku["context_window"] == 200000
+        assert haiku["pricing"] is not None
+
+    def test_groq_model_metadata(self, client):
+        response = client.get("/v1/models")
+        assert response.status_code == 200
+        models_by_id = {m["id"]: m for m in response.json()["data"]}
+        mixtral = models_by_id["mixtral-8x7b-32768"]
+        assert mixtral["owned_by"] == "groq"
+        assert mixtral["context_window"] == 32768
+
+    def test_gemini_model_metadata(self, client):
+        response = client.get("/v1/models")
+        assert response.status_code == 200
+        models_by_id = {m["id"]: m for m in response.json()["data"]}
+        pro = models_by_id["gemini-1.5-pro"]
+        assert pro["owned_by"] == "google"
+        assert pro["context_window"] == 2097152
+
+    @patch("app.routers.chat.route_chat_completion")
+    @patch("app.routers.chat.get_cached_response", return_value=None)
+    @patch("app.routers.chat.set_cached_response", new_callable=AsyncMock)
+    def test_chat_with_claude(
+        self, mock_set_cache, mock_get_cache, mock_route, client, test_user
+    ):
+        mock_route.return_value = {
+            "id": "msg-test123",
+            "object": "chat.completion",
+            "created": 1704067200,
+            "model": "claude-3-haiku-20240307",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": "Hi there!"},
+                    "finish_reason": "end_turn",
+                }
+            ],
+            "usage": {"prompt_tokens": 8, "completion_tokens": 4, "total_tokens": 12},
+        }
+
+        response = client.post(
+            "/v1/chat/completions",
+            headers={"Authorization": f"Bearer {test_user.api_key}"},
+            json={
+                "model": "claude-3-haiku-20240307",
+                "messages": [{"role": "user", "content": "Hi"}],
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["choices"][0]["message"]["content"] == "Hi there!"
+
+    @patch("app.routers.chat.route_chat_completion")
+    @patch("app.routers.chat.get_cached_response", return_value=None)
+    @patch("app.routers.chat.set_cached_response", new_callable=AsyncMock)
+    def test_chat_with_groq(
+        self, mock_set_cache, mock_get_cache, mock_route, client, test_user
+    ):
+        mock_route.return_value = {
+            "id": "chatcmpl-groq",
+            "object": "chat.completion",
+            "created": 1704067200,
+            "model": "llama3-8b-8192",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": "Hello from Groq!"},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {"prompt_tokens": 8, "completion_tokens": 6, "total_tokens": 14},
+        }
+
+        response = client.post(
+            "/v1/chat/completions",
+            headers={"Authorization": f"Bearer {test_user.api_key}"},
+            json={
+                "model": "llama3-8b-8192",
+                "messages": [{"role": "user", "content": "Hello"}],
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["choices"][0]["message"]["content"] == "Hello from Groq!"
+
+    @patch("app.routers.chat.route_chat_completion")
+    @patch("app.routers.chat.get_cached_response", return_value=None)
+    @patch("app.routers.chat.set_cached_response", new_callable=AsyncMock)
+    def test_chat_with_gemini(
+        self, mock_set_cache, mock_get_cache, mock_route, client, test_user
+    ):
+        mock_route.return_value = {
+            "id": "chatcmpl-gemini",
+            "object": "chat.completion",
+            "created": 1704067200,
+            "model": "gemini-1.5-flash",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": "Hello from Gemini!"},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {"prompt_tokens": 8, "completion_tokens": 6, "total_tokens": 14},
+        }
+
+        response = client.post(
+            "/v1/chat/completions",
+            headers={"Authorization": f"Bearer {test_user.api_key}"},
+            json={
+                "model": "gemini-1.5-flash",
+                "messages": [{"role": "user", "content": "Hello"}],
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["choices"][0]["message"]["content"] == "Hello from Gemini!"

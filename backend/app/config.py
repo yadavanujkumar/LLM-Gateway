@@ -33,6 +33,17 @@ class Settings(BaseSettings):
     MISTRAL_API_KEY: str = ""
     MISTRAL_BASE_URL: str = "https://api.mistral.ai/v1"
 
+    # Anthropic (Claude)
+    ANTHROPIC_API_KEY: str = ""
+
+    # Groq
+    GROQ_API_KEY: str = ""
+    GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
+
+    # Google Gemini
+    GEMINI_API_KEY: str = ""
+    GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta/openai"
+
     # Stripe
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
